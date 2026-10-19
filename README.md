@@ -4,6 +4,10 @@ A KYC / document-processing pipeline built on [Interfaze](https://interfaze.ai).
 
 Next.js 16 · React 19 · TypeScript · `interfaze` SDK · Zod 4 · Tailwind 4
 
+**Live demo:** <https://document-intelligence-agent-zeta.vercel.app/>. It's open to anyone, with no sign-in or API key. Click a bundled sample or upload your own image. Each visitor can run about 10 documents an hour (see [Spend limits](#spend-limits)).
+
+**Video:** [watch the walkthrough](https://document-intelligence-agent-zeta.vercel.app/recordings/demo.mov) in the browser, or open [public/recordings/demo.mov](public/recordings/demo.mov) in the repo.
+
 ```
            ┌─ /api/guard ─ guard: S1/S12/S15_IMAGE ─┐
  image ────┤      (runs in parallel; gates below)    ├─► /api/classify ──► /api/extract ──► grounding + checks
