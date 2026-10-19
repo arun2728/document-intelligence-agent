@@ -32,7 +32,9 @@ model = lev.load("interfaze-ai/lev")
 @spaces.GPU(duration=30)
 def systemone(state: str, questions: str) -> dict:
     """Answer Lev questions (a JSON object of choice/noul/score questions) about `state`."""
-    return model.system_one(state, json.loads(questions)).model_dump()
+    # model_dump() can hold non-str dict keys, which gr.JSON rejects; round-trip
+    # through pydantic's JSON so the payload matches what `lev serve` returns.
+    return json.loads(model.system_one(state, json.loads(questions)).model_dump_json())
 
 
 gr.Interface(

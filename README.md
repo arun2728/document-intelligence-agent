@@ -77,9 +77,39 @@ lev serve --checkpoint interfaze-ai/lev --host 0.0.0.0 --port 8000
 LEV_BASE_URL=http://localhost:8000
 ```
 
-No GPU? [deploy/lev-zerogpu](deploy/lev-zerogpu) runs Lev on a free Hugging Face ZeroGPU Space; set `LEV_TRANSPORT=gradio` to call it.
-
 Without it, everything still works through the Interfaze fallback.
+
+### Running Lev on a free ZeroGPU Space
+
+No GPU? [deploy/lev-zerogpu](deploy/lev-zerogpu) runs Lev on a free Hugging Face [ZeroGPU](https://huggingface.co/docs/hub/spaces-zerogpu) Space. It's a Gradio app that wraps `model.system_one` as a single `/systemone` API, so it returns the same `answers` shape as `lev serve`.
+
+| File | |
+|---|---|
+| [app.py](deploy/lev-zerogpu/app.py) | Loads `interfaze-ai/lev` at startup and runs each call inside `@spaces.GPU(duration=30)`. It patches PEFT to read the LoRA adapter on the CPU, because ZeroGPU's startup CUDA emulation can't load it straight onto the GPU. |
+| [requirements.txt](deploy/lev-zerogpu/requirements.txt) | Pins `torch==2.13.0`, the newest version ZeroGPU supports, with `transformers==5.17.0` and `lev` from GitHub. |
+| [README.md](deploy/lev-zerogpu/README.md) | The Space's config header (`sdk: gradio`, Python 3.12), plus the deploy steps and a curl smoke test. |
+
+To deploy it:
+
+1. Create a **Gradio** Space and pick **ZeroGPU** hardware. Free accounts need a verified email and an account older than 30 days, and can host two ZeroGPU Spaces. The Space can be private.
+2. Push the three files to the Space repo, for example:
+
+   ```bash
+   hf upload <user>/<space> deploy/lev-zerogpu . --repo-type space --exclude "__pycache__/*"
+   ```
+
+   The first build installs torch, and the first start downloads about 9.5 GB of weights, so allow several minutes.
+3. Create a Hugging Face **read** token. ZeroGPU charges GPU time to the caller's daily quota (5 min a day on a free account, 2 min unauthenticated), so always send the token.
+4. Point the app at the Space in `.env.local` and on Vercel:
+
+   ```bash
+   LEV_BASE_URL=https://<user>-<space>.hf.space
+   LEV_TRANSPORT=gradio
+   LEV_API_KEY=hf_...          # the read token, sent as a bearer token
+   LEV_TIMEOUT_MS=40000        # leaves room for queueing and GPU attach
+   ```
+
+With `LEV_TRANSPORT=gradio`, [lib/lev.ts](lib/lev.ts) queues a call on `POST /gradio_api/call/systemone`, then reads the result from the server-sent event stream. If the Space is asleep, out of quota, or slower than `LEV_TIMEOUT_MS`, classify falls back to Interfaze and the UI shows why. The server log records which engine answered each request (`[classify] engine=lev transport=gradio ...`). To test the Space on its own, use the curl smoke test in [deploy/lev-zerogpu/README.md](deploy/lev-zerogpu/README.md#smoke-test).
 
 ### Environment
 
@@ -88,9 +118,9 @@ Without it, everything still works through the Interfaze fallback.
 | `INTERFAZE_API_KEY` | (none) | Required |
 | `INTERFAZE_MODEL` | `interfaze-1` | OCR / classify / extract |
 | `INTERFAZE_GUARD_MODEL` | `interfaze-1.1-lite` | Guardrail call |
-| `LEV_BASE_URL` / `LEV_API_KEY` | (none) | Optional Lev server (bearer token if set) |
+| `LEV_BASE_URL` / `LEV_API_KEY` | (none) | Optional Lev server or Space. The key is sent as a bearer token; for the Space it's a Hugging Face read token |
 | `LEV_TRANSPORT` | `http` | `gradio` when `LEV_BASE_URL` is the ZeroGPU Space |
-| `LEV_TIMEOUT_MS` | `20000` | How long classify waits for Lev before falling back |
+| `LEV_TIMEOUT_MS` | `20000` | How long classify waits for Lev before falling back (about `40000` for ZeroGPU) |
 | `RATE_LIMIT_PER_IP_HOURLY` | `40` | Interfaze calls per client IP per hour |
 | `RATE_LIMIT_DAILY` | `400` | Interfaze calls per UTC day, all clients |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | (none) | Shared limit counters (`KV_REST_API_*` also accepted) |
@@ -114,6 +144,8 @@ lib/
   http.ts                     request validation, origin check + limits, error mapping
   rate-limit.ts               per-IP / daily counters (Upstash Redis or in-memory)
 tests/                        vitest, against a real OCR response fixture
+deploy/
+  lev-zerogpu/                Gradio app that serves Lev on a Hugging Face ZeroGPU Space
 ```
 
 ```bash

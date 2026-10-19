@@ -23,15 +23,22 @@ export async function POST(req: Request) {
 
     if (lev.isConfigured()) {
       try {
-        return Response.json({ ...(await classifyWithLev(state)), latencyMs: elapsed(started) } satisfies ClassifyResponse);
+        const result = await classifyWithLev(state);
+        console.info(`[classify] engine=lev transport=${lev.transport()} type=${result.documentType} latencyMs=${elapsed(started)}`);
+        return Response.json({ ...result, latencyMs: elapsed(started) } satisfies ClassifyResponse);
       } catch (err) {
+        console.warn(`[classify] Lev failed after ${elapsed(started)}ms (transport=${lev.transport()}); falling back to Interfaze`, err);
         const note = `Lev unavailable (${err instanceof Error ? err.message : "unknown error"}); fell back to Interfaze.`;
-        return Response.json({ ...(await classifyWithInterfaze(state)), note, latencyMs: elapsed(started) } satisfies ClassifyResponse);
+        const result = await classifyWithInterfaze(state);
+        console.info(`[classify] engine=interfaze reason=lev-error type=${result.documentType} latencyMs=${elapsed(started)}`);
+        return Response.json({ ...result, note, latencyMs: elapsed(started) } satisfies ClassifyResponse);
       }
     }
 
+    const result = await classifyWithInterfaze(state);
+    console.info(`[classify] engine=interfaze reason=lev-not-configured type=${result.documentType} latencyMs=${elapsed(started)}`);
     return Response.json({
-      ...(await classifyWithInterfaze(state)),
+      ...result,
       note: "LEV_BASE_URL not set; using Interfaze structured output.",
       latencyMs: elapsed(started),
     } satisfies ClassifyResponse);

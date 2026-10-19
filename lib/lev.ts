@@ -39,6 +39,7 @@ function authHeader(): Record<string, string> {
 
 export const lev = {
   isConfigured: () => Boolean(baseUrl()),
+  transport: () => (process.env.LEV_TRANSPORT === "gradio" ? "gradio" : "server"),
 
   async systemOne(
     state: string,
@@ -49,7 +50,7 @@ export const lev = {
     if (!url) throw new Error("LEV_BASE_URL is not set");
 
     const signal = AbortSignal.timeout(timeoutMs);
-    const call = process.env.LEV_TRANSPORT === "gradio" ? callGradio : callServer;
+    const call = lev.transport() === "gradio" ? callGradio : callServer;
     return responseSchema.parse(await call(url, state, questions, signal));
   },
 };
