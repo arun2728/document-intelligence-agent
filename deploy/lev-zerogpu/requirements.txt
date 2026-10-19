@@ -1,0 +1,7 @@
+# ZeroGPU supports torch 2.8–2.13; Lev's Modal image tests 2.14 + transformers 5.17.
+torch==2.13.0
+transformers==5.17.0
+peft>=0.14
+accelerate>=1.2
+safetensors>=0.4
+lev @ git+https://github.com/InterfazeAI/lev#subdirectory=packages/lev

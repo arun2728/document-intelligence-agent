@@ -77,6 +77,8 @@ lev serve --checkpoint interfaze-ai/lev --host 0.0.0.0 --port 8000
 LEV_BASE_URL=http://localhost:8000
 ```
 
+No GPU? [deploy/lev-zerogpu](deploy/lev-zerogpu) runs Lev on a free Hugging Face ZeroGPU Space; set `LEV_TRANSPORT=gradio` to call it.
+
 Without it, everything still works through the Interfaze fallback.
 
 ### Environment
@@ -87,6 +89,8 @@ Without it, everything still works through the Interfaze fallback.
 | `INTERFAZE_MODEL` | `interfaze-1` | OCR / classify / extract |
 | `INTERFAZE_GUARD_MODEL` | `interfaze-1.1-lite` | Guardrail call |
 | `LEV_BASE_URL` / `LEV_API_KEY` | (none) | Optional Lev server (bearer token if set) |
+| `LEV_TRANSPORT` | `http` | `gradio` when `LEV_BASE_URL` is the ZeroGPU Space |
+| `LEV_TIMEOUT_MS` | `20000` | How long classify waits for Lev before falling back |
 | `RATE_LIMIT_PER_IP_HOURLY` | `40` | Interfaze calls per client IP per hour |
 | `RATE_LIMIT_DAILY` | `400` | Interfaze calls per UTC day, all clients |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | (none) | Shared limit counters (`KV_REST_API_*` also accepted) |
