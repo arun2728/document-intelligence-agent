@@ -6,7 +6,11 @@ Next.js 16 · React 19 · TypeScript · `interfaze` SDK · Zod 4 · Tailwind 4
 
 **Live demo:** <https://document-intelligence-agent-zeta.vercel.app/>. It's open to anyone, with no sign-in or API key. Click a bundled sample or upload your own image. Each visitor can run about 10 documents an hour (see [Spend limits](#spend-limits)).
 
-**Video:** [watch the walkthrough](https://document-intelligence-agent-zeta.vercel.app/recordings/demo.mov) in the browser, or open [public/recordings/demo.mov](public/recordings/demo.mov) in the repo.
+**Video:**
+
+[![Demo: a receipt run through guardrails, OCR, Lev classification and extraction](public/recordings/demo.gif)](https://document-intelligence-agent-zeta.vercel.app/recordings/demo.mov)
+
+Click the preview for the full-resolution video, or open [public/recordings/demo.mov](public/recordings/demo.mov) in the repo.
 
 ```
            ┌─ /api/guard ─ guard: S1/S12/S15_IMAGE ─┐
